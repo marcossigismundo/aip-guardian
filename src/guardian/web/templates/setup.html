@@ -1,0 +1,660 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _("Setup Wizard") }} - {{ _("AIP Integrity Guardian") }}{% endblock %}
+
+{% block breadcrumb %}
+<span class="text-slate-300 dark:text-slate-600">/</span>
+<span class="text-slate-500 dark:text-slate-400">{{ _("Setup Wizard") }}</span>
+{% endblock %}
+
+{% block content %}
+<div x-data="setupWizard()" class="max-w-4xl mx-auto space-y-6">
+
+    {# Page Header #}
+    <div>
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">{{ _("Setup Wizard") }}</h2>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ _("Step-by-step configuration for AIP Integrity Guardian") }}</p>
+    </div>
+
+    {# ── Progress Bar ────────────────────────────────────────────── #}
+    <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-medium text-slate-900 dark:text-white">
+                {{ _("Step") }} <span x-text="currentStep"></span> {{ _("of") }} 7
+            </span>
+            <span class="text-xs text-slate-500 dark:text-slate-400" x-text="stepTitles[currentStep - 1]"></span>
+        </div>
+        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full transition-all duration-500 ease-out"
+                 :style="'width: ' + ((currentStep / 7) * 100) + '%'"></div>
+        </div>
+        <div class="mt-4 grid grid-cols-7 gap-1">
+            <template x-for="i in 7" :key="i">
+                <button @click="goToStep(i)"
+                        class="flex flex-col items-center gap-1 group"
+                        :class="i <= currentStep ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'">
+                    <div class="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                         :class="{
+                             'bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-md shadow-indigo-500/25': i === currentStep,
+                             'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400': i < currentStep,
+                             'bg-slate-100 text-slate-400 dark:bg-slate-700 dark:text-slate-500': i > currentStep
+                         }"
+                         x-text="i < currentStep ? '\u2713' : i">
+                    </div>
+                    <span class="text-[9px] font-medium text-center leading-tight hidden sm:block"
+                          :class="i === currentStep ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'"
+                          x-text="stepShortTitles[i - 1]"></span>
+                </button>
+            </template>
+        </div>
+    </div>
+
+    {# ── Step 1: System Requirements ─────────────────────────────── #}
+    <div x-show="currentStep === 1" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+        <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+            <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ _("System Requirements Check") }}</h3>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ _("Verify that your system meets the minimum requirements") }}</p>
+            </div>
+            <div class="p-6 space-y-4">
+
+                {# Python version #}
+                <div class="flex items-center gap-4 rounded-xl p-4 ring-1"
+                     :class="checks.python ? 'bg-emerald-50 ring-emerald-200 dark:bg-emerald-900/10 dark:ring-emerald-800' : 'bg-red-50 ring-red-200 dark:bg-red-900/10 dark:ring-red-800'">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                         :class="checks.python ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-red-100 dark:bg-red-900/40'">
+                        <svg x-show="checks.python" class="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        <svg x-show="!checks.python" class="h-5 w-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold" :class="checks.python ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'">
+                            Python >= 3.12
+                        </p>
+                        <p class="text-xs" :class="checks.python ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
+                            {{ _("Required for async/await support and modern type hints") }}
+                        </p>
+                    </div>
+                </div>
+
+                {# PostgreSQL #}
+                <div class="flex items-center gap-4 rounded-xl p-4 ring-1"
+                     :class="checks.postgres ? 'bg-emerald-50 ring-emerald-200 dark:bg-emerald-900/10 dark:ring-emerald-800' : 'bg-yellow-50 ring-yellow-200 dark:bg-yellow-900/10 dark:ring-yellow-800'">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                         :class="checks.postgres ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-yellow-100 dark:bg-yellow-900/40'">
+                        <svg x-show="checks.postgres" class="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        <svg x-show="!checks.postgres" class="h-5 w-5 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold" :class="checks.postgres ? 'text-emerald-800 dark:text-emerald-300' : 'text-yellow-800 dark:text-yellow-300'">
+                            PostgreSQL 14+
+                        </p>
+                        <p class="text-xs" :class="checks.postgres ? 'text-emerald-700 dark:text-emerald-400' : 'text-yellow-700 dark:text-yellow-400'">
+                            {{ _("Primary database for audit logs, AIP status, and HMAC records") }}
+                        </p>
+                    </div>
+                </div>
+
+                {# Redis #}
+                <div class="flex items-center gap-4 rounded-xl p-4 ring-1"
+                     :class="checks.redis ? 'bg-emerald-50 ring-emerald-200 dark:bg-emerald-900/10 dark:ring-emerald-800' : 'bg-yellow-50 ring-yellow-200 dark:bg-yellow-900/10 dark:ring-yellow-800'">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                         :class="checks.redis ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-yellow-100 dark:bg-yellow-900/40'">
+                        <svg x-show="checks.redis" class="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        <svg x-show="!checks.redis" class="h-5 w-5 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold" :class="checks.redis ? 'text-emerald-800 dark:text-emerald-300' : 'text-yellow-800 dark:text-yellow-300'">
+                            Redis 7+
+                        </p>
+                        <p class="text-xs" :class="checks.redis ? 'text-emerald-700 dark:text-emerald-400' : 'text-yellow-700 dark:text-yellow-400'">
+                            {{ _("Celery message broker for async task processing") }}
+                        </p>
+                    </div>
+                </div>
+
+                {# Docker #}
+                <div class="flex items-center gap-4 rounded-xl p-4 ring-1"
+                     :class="checks.docker ? 'bg-emerald-50 ring-emerald-200 dark:bg-emerald-900/10 dark:ring-emerald-800' : 'bg-slate-50 ring-slate-200 dark:bg-slate-900/10 dark:ring-slate-700'">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                         :class="checks.docker ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-slate-100 dark:bg-slate-700'">
+                        <svg x-show="checks.docker" class="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        <svg x-show="!checks.docker" class="h-5 w-5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold" :class="checks.docker ? 'text-emerald-800 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-300'">
+                            Docker <span class="text-xs font-normal">({{ _("Optional") }})</span>
+                        </p>
+                        <p class="text-xs" :class="checks.docker ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'">
+                            {{ _("Recommended for containerized deployment") }}
+                        </p>
+                    </div>
+                </div>
+
+                <button @click="runChecks()" :disabled="checking"
+                        class="mt-2 inline-flex items-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700
+                               hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors disabled:opacity-50">
+                    <svg x-show="!checking" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
+                    </svg>
+                    <svg x-show="checking" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {{ _("Re-check Requirements") }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {# ── Step 2: Database Setup ──────────────────────────────────── #}
+    <div x-show="currentStep === 2" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
+        <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+            <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ _("Database Setup") }}</h3>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ _("Configure the PostgreSQL connection for Guardian's data storage") }}</p>
+            </div>
+            <div class="p-6 space-y-5">
+                <div>
+                    <label for="db_url" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{{ _("Database URL") }}</label>
+                    <input id="db_url" type="text" x-model="config.database_url"
+                           placeholder="postgresql+asyncpg://guardian:password@localhost:5432/guardian_db"
+                           class="w-full rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-700 font-mono
+                                  placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none
+                                  dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500">
+                    <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        {{ _("Format: postgresql+asyncpg://user:password@host:port/dbname") }}
+                    </p>
+                </div>
+
+                <div class="rounded-xl bg-slate-50 dark:bg-slate-900/50 p-4">
+                    <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ _("Tables to be created:") }}</p>
+                    <ul class="space-y-1 text-xs text-slate-500 dark:text-slate-400">
+                        <li class="flex items-center gap-2">
+                            <span class="h-1 w-1 rounded-full bg-slate-400"></span>
+                            <code>aip_integrity_status</code> &mdash; {{ _("AIP status records") }}
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="h-1 w-1 rounded-full bg-slate-400"></span>
+                            <code>hmac_registry</code> &mdash; {{ _("HMAC authentication records") }}
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="h-1 w-1 rounded-full bg-slate-400"></span>
+                            <code>aip_integrity_audit_log</code> &mdash; {{ _("Immutable audit log") }}
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="h-1 w-1 rounded-full bg-slate-400"></span>
+                            <code>content_fingerprint</code> &mdash; {{ _("Content change detection") }}
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="h-1 w-1 rounded-full bg-slate-400"></span>
+                            <code>anchor_registry</code> &mdash; {{ _("External anchors") }}
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="h-1 w-1 rounded-full bg-slate-400"></span>
+                            <code>repair_record</code> &mdash; {{ _("Repair history") }}
+                        </li>
+                    </ul>
+                </div>
+
+                <button @click="testConnection('database')" :disabled="testing.database"
+                        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white
+                               hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                               dark:focus:ring-offset-slate-800 transition-colors disabled:opacity-50">
+                    <svg x-show="!testing.database" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
+                    </svg>
+                    <svg x-show="testing.database" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {{ _("Test Connection") }}
+                </button>
+                <span x-show="testResults.database !== null" class="ml-2 text-sm font-medium"
+                      :class="testResults.database ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
+                      x-text="testResults.database ? '{{ _("Connected successfully!") }}' : '{{ _("Connection failed") }}'"></span>
+            </div>
+        </div>
+    </div>
+
+    {# ── Step 3: Redis Configuration ─────────────────────────────── #}
+    <div x-show="currentStep === 3" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
+        <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+            <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ _("Redis Configuration") }}</h3>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ _("Configure Redis as the Celery message broker for background task processing") }}</p>
+            </div>
+            <div class="p-6 space-y-5">
+                <div>
+                    <label for="redis_url" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{{ _("Redis URL") }}</label>
+                    <input id="redis_url" type="text" x-model="config.redis_url"
+                           placeholder="redis://localhost:6379/0"
+                           class="w-full rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-700 font-mono
+                                  placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none
+                                  dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500">
+                </div>
+
+                <div class="rounded-xl bg-blue-50 dark:bg-blue-900/10 p-4 ring-1 ring-blue-200 dark:ring-blue-800">
+                    <div class="flex items-start gap-3">
+                        <svg class="h-5 w-5 text-blue-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-blue-800 dark:text-blue-300">{{ _("Celery Broker Role") }}</p>
+                            <p class="mt-0.5 text-xs text-blue-700 dark:text-blue-400">{{ _("Redis serves as the message broker for Celery, enabling scheduled integrity checks, anchor submissions, and async notification delivery.") }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button @click="testConnection('redis')" :disabled="testing.redis"
+                        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white
+                               hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                               dark:focus:ring-offset-slate-800 transition-colors disabled:opacity-50">
+                    <svg x-show="!testing.redis" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7" />
+                    </svg>
+                    <svg x-show="testing.redis" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {{ _("Test Connection") }}
+                </button>
+                <span x-show="testResults.redis !== null" class="ml-2 text-sm font-medium"
+                      :class="testResults.redis ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
+                      x-text="testResults.redis ? '{{ _("Connected successfully!") }}' : '{{ _("Connection failed") }}'"></span>
+            </div>
+        </div>
+    </div>
+
+    {# ── Step 4: Archivematica Connection ────────────────────────── #}
+    <div x-show="currentStep === 4" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
+        <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+            <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ _("Archivematica Connection") }}</h3>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ _("Connect to your Archivematica Storage Service to access AIPs") }}</p>
+            </div>
+            <div class="p-6 space-y-5">
+                <div>
+                    <label for="am_ss_url" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{{ _("Storage Service URL") }}</label>
+                    <input id="am_ss_url" type="url" x-model="config.archivematica_ss_url"
+                           placeholder="http://localhost:8000"
+                           class="w-full rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-700
+                                  placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none
+                                  dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="am_user" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{{ _("User") }}</label>
+                        <input id="am_user" type="text" x-model="config.archivematica_user"
+                               placeholder="admin"
+                               class="w-full rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-700
+                                      placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none
+                                      dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500">
+                    </div>
+                    <div>
+                        <label for="am_api_key" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{{ _("API Key") }}</label>
+                        <input id="am_api_key" type="password" x-model="config.archivematica_api_key"
+                               placeholder="{{ _('Enter API key...') }}"
+                               class="w-full rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-700
+                                      placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none
+                                      dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500">
+                    </div>
+                </div>
+
+                <div class="rounded-xl bg-amber-50 dark:bg-amber-900/10 p-4 ring-1 ring-amber-200 dark:ring-amber-800">
+                    <div class="flex items-start gap-3">
+                        <svg class="h-5 w-5 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ _("Required Access") }}</p>
+                            <p class="mt-0.5 text-xs text-amber-700 dark:text-amber-400">{{ _("Guardian needs read access to the Storage Service API to discover and download AIPs for verification. The API user must have permission to list and retrieve packages.") }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button @click="testConnection('archivematica')" :disabled="testing.archivematica"
+                        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white
+                               hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                               dark:focus:ring-offset-slate-800 transition-colors disabled:opacity-50">
+                    <svg x-show="!testing.archivematica" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                    </svg>
+                    <svg x-show="testing.archivematica" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {{ _("Test Connection") }}
+                </button>
+                <span x-show="testResults.archivematica !== null" class="ml-2 text-sm font-medium"
+                      :class="testResults.archivematica ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
+                      x-text="testResults.archivematica ? '{{ _("Connected successfully!") }}' : '{{ _("Connection failed") }}'"></span>
+            </div>
+        </div>
+    </div>
+
+    {# ── Step 5: HMAC Key Generation ─────────────────────────────── #}
+    <div x-show="currentStep === 5" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
+        <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+            <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ _("HMAC Key Generation") }}</h3>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ _("Configure the HMAC key used to authenticate AIP manifests") }}</p>
+            </div>
+            <div class="p-6 space-y-5">
+                <div class="space-y-3">
+                    {# Option 1: Auto-generate #}
+                    <label class="flex items-start gap-3 rounded-xl p-4 cursor-pointer transition-colors ring-1"
+                           :class="config.hmac_method === 'auto' ? 'ring-indigo-300 bg-indigo-50 dark:ring-indigo-700 dark:bg-indigo-900/20' : 'ring-slate-200 hover:bg-slate-50 dark:ring-slate-700 dark:hover:bg-slate-800'">
+                        <input type="radio" x-model="config.hmac_method" value="auto" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ _("Auto-generate a secure key") }}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ _("Generates a cryptographically secure 256-bit key. Recommended for new installations.") }}</p>
+                        </div>
+                    </label>
+
+                    {# Option 2: Enter manually #}
+                    <label class="flex items-start gap-3 rounded-xl p-4 cursor-pointer transition-colors ring-1"
+                           :class="config.hmac_method === 'manual' ? 'ring-indigo-300 bg-indigo-50 dark:ring-indigo-700 dark:bg-indigo-900/20' : 'ring-slate-200 hover:bg-slate-50 dark:ring-slate-700 dark:hover:bg-slate-800'">
+                        <input type="radio" x-model="config.hmac_method" value="manual" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ _("Enter a key manually") }}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ _("Provide your own hex-encoded key. Use when migrating from an existing installation.") }}</p>
+                            <input x-show="config.hmac_method === 'manual'" type="text" x-model="config.hmac_key"
+                                   placeholder="{{ _('Hex-encoded key (64 characters)...') }}"
+                                   class="mt-3 w-full rounded-lg border border-slate-300 bg-white py-2 px-3 text-sm text-slate-700 font-mono
+                                          placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none
+                                          dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500">
+                        </div>
+                    </label>
+
+                    {# Option 3: Use file #}
+                    <label class="flex items-start gap-3 rounded-xl p-4 cursor-pointer transition-colors ring-1"
+                           :class="config.hmac_method === 'file' ? 'ring-indigo-300 bg-indigo-50 dark:ring-indigo-700 dark:bg-indigo-900/20' : 'ring-slate-200 hover:bg-slate-50 dark:ring-slate-700 dark:hover:bg-slate-800'">
+                        <input type="radio" x-model="config.hmac_method" value="file" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ _("Read from a key file") }}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ _("Load the key from a file on disk. Useful for secret management tools.") }}</p>
+                            <input x-show="config.hmac_method === 'file'" type="text" x-model="config.hmac_key_file"
+                                   placeholder="{{ _('/path/to/hmac.key') }}"
+                                   class="mt-3 w-full rounded-lg border border-slate-300 bg-white py-2 px-3 text-sm text-slate-700 font-mono
+                                          placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none
+                                          dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500">
+                        </div>
+                    </label>
+                </div>
+
+                <div class="rounded-xl bg-red-50 dark:bg-red-900/10 p-4 ring-1 ring-red-200 dark:ring-red-800">
+                    <div class="flex items-start gap-3">
+                        <svg class="h-5 w-5 text-red-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-red-800 dark:text-red-300">{{ _("Security Warning") }}</p>
+                            <p class="mt-0.5 text-xs text-red-700 dark:text-red-400">{{ _("The HMAC key is critical for manifest authentication. If lost, all existing HMAC records become unverifiable. Back up this key securely and never commit it to version control.") }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Step 6: Notification Setup ──────────────────────────────── #}
+    <div x-show="currentStep === 6" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
+        <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+            <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ _("Notification Setup") }}</h3>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ _("Configure how Guardian alerts you about integrity issues") }}</p>
+            </div>
+            <div class="p-6 space-y-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="admin_email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{{ _("Admin Email") }}</label>
+                        <input id="admin_email" type="email" x-model="config.admin_email"
+                               placeholder="admin@example.com"
+                               class="w-full rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-700
+                                      placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none
+                                      dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500">
+                    </div>
+                    <div>
+                        <label for="smtp_host" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{{ _("SMTP Host") }}</label>
+                        <input id="smtp_host" type="text" x-model="config.smtp_host"
+                               placeholder="smtp.example.com"
+                               class="w-full rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-700
+                                      placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none
+                                      dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500">
+                    </div>
+                    <div>
+                        <label for="smtp_port" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{{ _("SMTP Port") }}</label>
+                        <input id="smtp_port" type="number" x-model="config.smtp_port"
+                               placeholder="587"
+                               class="w-full rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-700
+                                      placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none
+                                      dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500">
+                    </div>
+                    <div>
+                        <label for="webhook_url" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">{{ _("Webhook URL") }}</label>
+                        <input id="webhook_url" type="url" x-model="config.webhook_url"
+                               placeholder="https://hooks.slack.com/..."
+                               class="w-full rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-700
+                                      placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none
+                                      dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-500">
+                    </div>
+                </div>
+
+                <button @click="testConnection('notification')" :disabled="testing.notification"
+                        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white
+                               hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                               dark:focus:ring-offset-slate-800 transition-colors disabled:opacity-50">
+                    <svg x-show="!testing.notification" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                    </svg>
+                    <svg x-show="testing.notification" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {{ _("Send Test Notification") }}
+                </button>
+                <span x-show="testResults.notification !== null" class="ml-2 text-sm font-medium"
+                      :class="testResults.notification ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
+                      x-text="testResults.notification ? '{{ _("Notification sent!") }}' : '{{ _("Failed to send") }}'"></span>
+            </div>
+        </div>
+    </div>
+
+    {# ── Step 7: Review & Apply ──────────────────────────────────── #}
+    <div x-show="currentStep === 7" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
+        <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+            <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ _("Review & Apply") }}</h3>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ _("Review your configuration and apply changes") }}</p>
+            </div>
+            <div class="p-6 space-y-6">
+
+                {# Config Summary #}
+                <div class="rounded-xl bg-slate-50 dark:bg-slate-900/50 p-5 space-y-4">
+                    <h4 class="text-sm font-semibold text-slate-900 dark:text-white">{{ _("Configuration Summary") }}</h4>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ _("Database") }}</p>
+                            <p class="mt-1 font-mono text-xs text-slate-700 dark:text-slate-300 break-all" x-text="config.database_url"></p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ _("Redis") }}</p>
+                            <p class="mt-1 font-mono text-xs text-slate-700 dark:text-slate-300" x-text="config.redis_url"></p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ _("Archivematica SS") }}</p>
+                            <p class="mt-1 font-mono text-xs text-slate-700 dark:text-slate-300" x-text="config.archivematica_ss_url"></p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ _("HMAC Key Method") }}</p>
+                            <p class="mt-1 text-xs text-slate-700 dark:text-slate-300" x-text="config.hmac_method === 'auto' ? '{{ _("Auto-generated") }}' : config.hmac_method === 'manual' ? '{{ _("Manual entry") }}' : '{{ _("Key file") }}'"></p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ _("Admin Email") }}</p>
+                            <p class="mt-1 text-xs text-slate-700 dark:text-slate-300" x-text="config.admin_email || '{{ _('Not set') }}'"></p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ _("Webhook") }}</p>
+                            <p class="mt-1 font-mono text-xs text-slate-700 dark:text-slate-300 truncate" x-text="config.webhook_url || '{{ _('Not set') }}'"></p>
+                        </div>
+                    </div>
+                </div>
+
+                {# Action Buttons #}
+                <div class="space-y-3">
+                    <button @click="runAction('migrate')" :disabled="actions.migrate === 'running'"
+                            class="w-full flex items-center justify-between rounded-xl p-4 text-left transition-all ring-1"
+                            :class="{
+                                'ring-emerald-200 bg-emerald-50 dark:ring-emerald-800 dark:bg-emerald-900/10': actions.migrate === 'done',
+                                'ring-slate-200 hover:bg-slate-50 dark:ring-slate-700 dark:hover:bg-slate-800': actions.migrate !== 'done',
+                            }">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/40">
+                                <svg class="h-5 w-5 text-violet-600 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ _("Run Migrations") }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ _("Create database tables and apply schema") }}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <svg x-show="actions.migrate === 'done'" class="h-6 w-6 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            <svg x-show="actions.migrate === 'running'" class="h-6 w-6 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <svg x-show="actions.migrate === 'idle'" class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </div>
+                    </button>
+
+                    <button @click="runAction('register')" :disabled="actions.register === 'running'"
+                            class="w-full flex items-center justify-between rounded-xl p-4 text-left transition-all ring-1"
+                            :class="{
+                                'ring-emerald-200 bg-emerald-50 dark:ring-emerald-800 dark:bg-emerald-900/10': actions.register === 'done',
+                                'ring-slate-200 hover:bg-slate-50 dark:ring-slate-700 dark:hover:bg-slate-800': actions.register !== 'done',
+                            }">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/40">
+                                <svg class="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ _("Register Existing AIPs") }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ _("Discover and register AIPs from Archivematica") }}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <svg x-show="actions.register === 'done'" class="h-6 w-6 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            <svg x-show="actions.register === 'running'" class="h-6 w-6 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <svg x-show="actions.register === 'idle'" class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </div>
+                    </button>
+
+                    <button @click="runAction('start')" :disabled="actions.start === 'running'"
+                            class="w-full flex items-center justify-between rounded-xl p-4 text-left transition-all ring-1"
+                            :class="{
+                                'ring-emerald-200 bg-emerald-50 dark:ring-emerald-800 dark:bg-emerald-900/10': actions.start === 'done',
+                                'ring-slate-200 hover:bg-slate-50 dark:ring-slate-700 dark:hover:bg-slate-800': actions.start !== 'done',
+                            }">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
+                                <svg class="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ _("Start Services") }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ _("Launch Celery workers and scheduled tasks") }}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <svg x-show="actions.start === 'done'" class="h-6 w-6 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            <svg x-show="actions.start === 'running'" class="h-6 w-6 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <svg x-show="actions.start === 'idle'" class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+
+                {# Success screen #}
+                <div x-show="actions.migrate === 'done' && actions.register === 'done' && actions.start === 'done'"
+                     x-transition class="rounded-xl bg-emerald-50 dark:bg-emerald-900/10 p-6 ring-1 ring-emerald-200 dark:ring-emerald-800 text-center" style="display: none;">
+                    <svg class="mx-auto h-12 w-12 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.745 3.745 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                    </svg>
+                    <h4 class="mt-3 text-lg font-bold text-emerald-800 dark:text-emerald-300">{{ _("Setup Complete!") }}</h4>
+                    <p class="mt-1 text-sm text-emerald-700 dark:text-emerald-400">{{ _("AIP Integrity Guardian is configured and running. Visit the Dashboard to monitor your AIPs.") }}</p>
+                    <a href="/dashboard"
+                       class="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white
+                              hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors">
+                        {{ _("Go to Dashboard") }}
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Navigation Buttons ──────────────────────────────────────── #}
+    <div class="flex items-center justify-between">
+        <button @click="prevStep()" x-show="currentStep > 1"
+                class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700
+                       hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition-colors">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+            {{ _("Previous") }}
+        </button>
+        <div x-show="currentStep === 1"></div>
+
+        <button @click="nextStep()" x-show="currentStep < 7"
+                class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 px-5 py-2.5 text-sm font-semibold text-white
+                       shadow-md shadow-indigo-500/25 hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                       dark:focus:ring-offset-slate-900 transition-all">
+            {{ _("Next") }}
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+        </button>
+    </div>
+</div>
+{% endblock %}

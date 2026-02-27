@@ -1,0 +1,695 @@
+# =============================================================================
+# AIP Integrity Guardian — Traducciones al espanol
+# =============================================================================
+# Copyright (C) 2024-2026 Tainacan
+# Este archivo se distribuye bajo la licencia AGPL-3.0-or-later.
+# =============================================================================
+msgid ""
+msgstr ""
+"Project-Id-Version: AIP Integrity Guardian 1.0.0\n"
+"Report-Msgid-Bugs-To: dev@tainacan.org\n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: Tainacan <dev@tainacan.org>\n"
+"Language-Team: Spanish\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# =============================================================================
+# Navegacion
+# =============================================================================
+
+msgid "nav_dashboard"
+msgstr "Panel de Control"
+
+msgid "nav_aips"
+msgstr "AIPs"
+
+msgid "nav_audit_log"
+msgstr "Registro de Auditoria"
+
+msgid "nav_anchors"
+msgstr "Anclas"
+
+msgid "nav_settings"
+msgstr "Configuracion"
+
+msgid "nav_setup"
+msgstr "Configuracion Inicial"
+
+msgid "nav_help"
+msgstr "Ayuda"
+
+msgid "nav_logout"
+msgstr "Cerrar Sesion"
+
+# =============================================================================
+# Panel de Control
+# =============================================================================
+
+msgid "dashboard_title"
+msgstr "Panel de Control"
+
+msgid "dashboard_total_aips"
+msgstr "Total de AIPs"
+
+msgid "dashboard_valid"
+msgstr "Validos"
+
+msgid "dashboard_corrupted"
+msgstr "Corrompidos"
+
+msgid "dashboard_repaired"
+msgstr "Reparados"
+
+msgid "dashboard_never_verified"
+msgstr "Sin Verificar"
+
+msgid "dashboard_audit_chain_status"
+msgstr "Estado de la Cadena de Auditoria"
+
+msgid "dashboard_chain_intact"
+msgstr "Cadena Intacta"
+
+msgid "dashboard_chain_broken"
+msgstr "Cadena Rota"
+
+msgid "dashboard_last_anchor"
+msgstr "Ultimo Ancla"
+
+msgid "dashboard_recent_activity"
+msgstr "Actividad Reciente"
+
+msgid "dashboard_system_health"
+msgstr "Salud del Sistema"
+
+msgid "dashboard_healthy"
+msgstr "Saludable"
+
+msgid "dashboard_degraded"
+msgstr "Degradado"
+
+msgid "dashboard_unhealthy"
+msgstr "No Saludable"
+
+msgid "dashboard_last_full_check"
+msgstr "Ultima Verificacion Completa"
+
+msgid "dashboard_no_checks_yet"
+msgstr "Aun no se han realizado verificaciones"
+
+msgid "dashboard_overview"
+msgstr "Resumen General"
+
+msgid "dashboard_integrity_summary"
+msgstr "Resumen de Integridad"
+
+# =============================================================================
+# Lista de AIPs
+# =============================================================================
+
+msgid "aip_list_title"
+msgstr "Inventario de AIPs"
+
+msgid "aip_status"
+msgstr "Estado"
+
+msgid "aip_last_verified"
+msgstr "Ultima Verificacion"
+
+msgid "aip_total_checks"
+msgstr "Total de Verificaciones"
+
+msgid "aip_failures"
+msgstr "Fallos"
+
+msgid "aip_files"
+msgstr "Archivos"
+
+msgid "aip_actions"
+msgstr "Acciones"
+
+msgid "aip_verify_now"
+msgstr "Verificar Ahora"
+
+msgid "aip_filter"
+msgstr "Filtrar"
+
+msgid "aip_search"
+msgstr "Buscar"
+
+msgid "aip_search_placeholder"
+msgstr "Buscar por UUID o ruta..."
+
+msgid "aip_register"
+msgstr "Registrar AIP"
+
+msgid "aip_no_aips"
+msgstr "Aun no hay AIPs registrados"
+
+msgid "aip_uuid"
+msgstr "UUID del AIP"
+
+msgid "aip_archivematica_uuid"
+msgstr "UUID de Archivematica"
+
+msgid "aip_created_at"
+msgstr "Registrado"
+
+msgid "aip_updated_at"
+msgstr "Ultima Actualizacion"
+
+# =============================================================================
+# Detalle de AIP
+# =============================================================================
+
+msgid "aip_detail_title"
+msgstr "Detalles del AIP"
+
+msgid "aip_storage_path"
+msgstr "Ruta de Almacenamiento"
+
+msgid "aip_storage_location"
+msgstr "Ubicacion de Almacenamiento"
+
+msgid "aip_hmac_check"
+msgstr "Verificacion HMAC"
+
+msgid "aip_content_fingerprint"
+msgstr "Huella Digital del Contenido"
+
+msgid "aip_verification_history"
+msgstr "Historial de Verificaciones"
+
+msgid "aip_hmac_records"
+msgstr "Registros HMAC"
+
+msgid "aip_repair_history"
+msgstr "Historial de Reparaciones"
+
+msgid "aip_no_verification_history"
+msgstr "No hay historial de verificaciones disponible"
+
+msgid "aip_no_hmac_records"
+msgstr "No se encontraron registros HMAC"
+
+msgid "aip_no_repair_history"
+msgstr "No se encontraron registros de reparacion"
+
+msgid "aip_manifest_name"
+msgstr "Manifiesto"
+
+msgid "aip_hmac_value"
+msgstr "Valor HMAC"
+
+msgid "aip_hmac_algorithm"
+msgstr "Algoritmo"
+
+msgid "aip_hmac_registered_at"
+msgstr "Registrado En"
+
+msgid "aip_hmac_last_verified"
+msgstr "Ultima Verificacion"
+
+msgid "aip_repair_status"
+msgstr "Estado de Reparacion"
+
+msgid "aip_repair_source"
+msgstr "Replica de Origen"
+
+msgid "aip_repair_files"
+msgstr "Archivos Reparados"
+
+msgid "aip_repair_date"
+msgstr "Fecha de Reparacion"
+
+# =============================================================================
+# Registro de Auditoria
+# =============================================================================
+
+msgid "audit_title"
+msgstr "Registro de Auditoria"
+
+msgid "audit_event_type"
+msgstr "Tipo de Evento"
+
+msgid "audit_details"
+msgstr "Detalles"
+
+msgid "audit_chain_status"
+msgstr "Estado de la Cadena"
+
+msgid "audit_date_range"
+msgstr "Rango de Fechas"
+
+msgid "audit_from_date"
+msgstr "Desde"
+
+msgid "audit_to_date"
+msgstr "Hasta"
+
+msgid "audit_apply_filter"
+msgstr "Aplicar Filtro"
+
+msgid "audit_clear_filter"
+msgstr "Limpiar Filtro"
+
+msgid "audit_record_id"
+msgstr "ID del Registro"
+
+msgid "audit_previous_hash"
+msgstr "Hash Anterior"
+
+msgid "audit_record_hash"
+msgstr "Hash del Registro"
+
+msgid "audit_created_at"
+msgstr "Fecha"
+
+msgid "audit_verify_chain"
+msgstr "Verificar Cadena"
+
+msgid "audit_no_records"
+msgstr "No se encontraron registros de auditoria"
+
+msgid "audit_chain_verified"
+msgstr "Cadena Verificada"
+
+msgid "audit_total_records"
+msgstr "Total de Registros"
+
+msgid "audit_broken_links"
+msgstr "Enlaces Rotos"
+
+# =============================================================================
+# Tipos de Eventos de Auditoria
+# =============================================================================
+
+msgid "event_fixity_check"
+msgstr "Verificacion de Fijeza"
+
+msgid "event_hmac_verify"
+msgstr "Verificacion HMAC"
+
+msgid "event_tamper_detected"
+msgstr "Manipulacion Detectada"
+
+msgid "event_auto_repair"
+msgstr "Reparacion Automatica"
+
+msgid "event_anchor_submitted"
+msgstr "Ancla Enviada"
+
+msgid "event_anchor_confirmed"
+msgstr "Ancla Confirmada"
+
+msgid "event_aip_registered"
+msgstr "AIP Registrado"
+
+msgid "event_health_check"
+msgstr "Verificacion de Salud"
+
+msgid "event_chain_verify"
+msgstr "Verificacion de Cadena"
+
+# =============================================================================
+# Anclas
+# =============================================================================
+
+msgid "anchors_title"
+msgstr "Anclas Externas"
+
+msgid "anchor_batch_range"
+msgstr "Rango del Lote"
+
+msgid "anchor_batch_hash"
+msgstr "Hash del Lote"
+
+msgid "anchor_merkle_root"
+msgstr "Raiz de Merkle"
+
+msgid "anchor_tsa_url"
+msgstr "URL de la TSA"
+
+msgid "anchor_method"
+msgstr "Metodo"
+
+msgid "anchor_verify"
+msgstr "Verificar"
+
+msgid "anchor_anchored_at"
+msgstr "Anclado En"
+
+msgid "anchor_no_anchors"
+msgstr "Aun no se han registrado anclas"
+
+msgid "anchor_verification_result"
+msgstr "Resultado de la Verificacion"
+
+msgid "anchor_timestamp_valid"
+msgstr "Marca de Tiempo Valida"
+
+msgid "anchor_timestamp_invalid"
+msgstr "Marca de Tiempo Invalida"
+
+# =============================================================================
+# Configuracion
+# =============================================================================
+
+msgid "settings_title"
+msgstr "Configuracion"
+
+msgid "settings_system_info"
+msgstr "Informacion del Sistema"
+
+msgid "settings_database"
+msgstr "Base de Datos"
+
+msgid "settings_connection"
+msgstr "Conexion"
+
+msgid "settings_schedule"
+msgstr "Programacion"
+
+msgid "settings_hmac_key"
+msgstr "Clave HMAC"
+
+msgid "settings_notifications"
+msgstr "Notificaciones"
+
+msgid "settings_version"
+msgstr "Version"
+
+msgid "settings_python_version"
+msgstr "Version de Python"
+
+msgid "settings_db_status"
+msgstr "Estado de la Base de Datos"
+
+msgid "settings_db_connected"
+msgstr "Conectada"
+
+msgid "settings_db_disconnected"
+msgstr "Desconectada"
+
+msgid "settings_redis_status"
+msgstr "Estado de Redis"
+
+msgid "settings_celery_status"
+msgstr "Estado de Celery"
+
+msgid "settings_archivematica_status"
+msgstr "Estado de Archivematica"
+
+msgid "settings_fixity_schedule"
+msgstr "Programacion de Verificacion de Fijeza"
+
+msgid "settings_anchor_schedule"
+msgstr "Programacion de Anclas"
+
+msgid "settings_chain_verify_schedule"
+msgstr "Programacion de Verificacion de Cadena"
+
+msgid "settings_hmac_key_source"
+msgstr "Fuente de la Clave HMAC"
+
+msgid "settings_hmac_key_env"
+msgstr "Variable de Entorno"
+
+msgid "settings_hmac_key_file"
+msgstr "Archivo de Clave"
+
+msgid "settings_hmac_key_derived"
+msgstr "Derivada del Secreto"
+
+msgid "settings_email_notifications"
+msgstr "Notificaciones por Correo"
+
+msgid "settings_webhook_notifications"
+msgstr "Notificaciones por Webhook"
+
+msgid "settings_smtp_host"
+msgstr "Servidor SMTP"
+
+msgid "settings_smtp_port"
+msgstr "Puerto SMTP"
+
+msgid "settings_admin_email"
+msgstr "Correo del Administrador"
+
+msgid "settings_webhook_url"
+msgstr "URL del Webhook"
+
+msgid "settings_language"
+msgstr "Idioma"
+
+msgid "settings_save_language"
+msgstr "Guardar Idioma"
+
+# =============================================================================
+# Asistente de Configuracion
+# =============================================================================
+
+msgid "setup_title"
+msgstr "Asistente de Configuracion"
+
+msgid "setup_welcome"
+msgstr "Bienvenido a AIP Integrity Guardian"
+
+msgid "setup_welcome_desc"
+msgstr "Este asistente le guiara a traves de la configuracion inicial de su instancia de Guardian."
+
+msgid "setup_step1_title"
+msgstr "Conexion a la Base de Datos"
+
+msgid "setup_step1_desc"
+msgstr "Configure la conexion a la base de datos PostgreSQL. Guardian utiliza PostgreSQL para almacenar el estado de los AIPs, registros de auditoria y registros HMAC."
+
+msgid "setup_step2_title"
+msgstr "Conexion a Redis"
+
+msgid "setup_step2_desc"
+msgstr "Configure la conexion a Redis para la cola de tareas Celery. Redis se utiliza como intermediario de mensajes para el procesamiento de tareas en segundo plano."
+
+msgid "setup_step3_title"
+msgstr "Integracion con Archivematica"
+
+msgid "setup_step3_desc"
+msgstr "Conectese a su instancia del Servicio de Almacenamiento de Archivematica. Guardian usara esta conexion para descubrir y acceder a los AIPs."
+
+msgid "setup_step4_title"
+msgstr "Configuracion de Clave HMAC"
+
+msgid "setup_step4_desc"
+msgstr "Configure la clave HMAC utilizada para firmar los manifiestos de los AIPs. Esta clave protege los archivos de manifiesto contra manipulacion."
+
+msgid "setup_step5_title"
+msgstr "Programacion de Verificaciones"
+
+msgid "setup_step5_desc"
+msgstr "Configure la programacion para las verificaciones automaticas de fijeza, verificacion HMAC y anclaje externo."
+
+msgid "setup_step6_title"
+msgstr "Notificaciones"
+
+msgid "setup_step6_desc"
+msgstr "Configure las notificaciones por correo electronico y webhook para alertas de integridad. Sera notificado cuando se detecte corrupcion."
+
+msgid "setup_step7_title"
+msgstr "Revisar y Finalizar"
+
+msgid "setup_step7_desc"
+msgstr "Revise su configuracion y complete la instalacion. Puede cambiar estos ajustes mas tarde desde la pagina de Configuracion."
+
+msgid "setup_test_connection"
+msgstr "Probar Conexion"
+
+msgid "setup_connection_success"
+msgstr "Conexion exitosa"
+
+msgid "setup_connection_failed"
+msgstr "Conexion fallida"
+
+msgid "setup_generate_key"
+msgstr "Generar Clave"
+
+msgid "setup_import_key"
+msgstr "Importar Clave"
+
+msgid "setup_skip_step"
+msgstr "Omitir Este Paso"
+
+msgid "setup_finish"
+msgstr "Finalizar Configuracion"
+
+msgid "setup_complete"
+msgstr "Configuracion Completa"
+
+msgid "setup_complete_desc"
+msgstr "Guardian ha sido configurado exitosamente. Ahora puede comenzar a monitorear sus AIPs."
+
+msgid "setup_go_dashboard"
+msgstr "Ir al Panel de Control"
+
+# =============================================================================
+# Comunes / Botones
+# =============================================================================
+
+msgid "common_save"
+msgstr "Guardar"
+
+msgid "common_cancel"
+msgstr "Cancelar"
+
+msgid "common_next"
+msgstr "Siguiente"
+
+msgid "common_previous"
+msgstr "Anterior"
+
+msgid "common_loading"
+msgstr "Cargando..."
+
+msgid "common_error"
+msgstr "Error"
+
+msgid "common_success"
+msgstr "Exito"
+
+msgid "common_no_data"
+msgstr "No hay datos disponibles"
+
+msgid "common_page_of_pages"
+msgstr "Pagina %(page)s de %(total_pages)s"
+
+msgid "common_confirm"
+msgstr "Confirmar"
+
+msgid "common_delete"
+msgstr "Eliminar"
+
+msgid "common_edit"
+msgstr "Editar"
+
+msgid "common_refresh"
+msgstr "Actualizar"
+
+msgid "common_export"
+msgstr "Exportar"
+
+msgid "common_close"
+msgstr "Cerrar"
+
+msgid "common_back"
+msgstr "Volver"
+
+msgid "common_yes"
+msgstr "Si"
+
+msgid "common_no"
+msgstr "No"
+
+msgid "common_all"
+msgstr "Todos"
+
+msgid "common_none"
+msgstr "Ninguno"
+
+msgid "common_showing_results"
+msgstr "Mostrando %(start)s a %(end)s de %(total)s resultados"
+
+# =============================================================================
+# Etiquetas de Estado
+# =============================================================================
+
+msgid "status_pending"
+msgstr "Pendiente"
+
+msgid "status_valid"
+msgstr "Valido"
+
+msgid "status_corrupted"
+msgstr "Corrompido"
+
+msgid "status_repaired"
+msgstr "Reparado"
+
+msgid "status_error"
+msgstr "Error"
+
+msgid "status_pass"
+msgstr "Aprobado"
+
+msgid "status_fail"
+msgstr "Fallido"
+
+msgid "status_warning"
+msgstr "Advertencia"
+
+msgid "status_success"
+msgstr "Exitoso"
+
+msgid "status_failed"
+msgstr "Fallido"
+
+msgid "status_partial"
+msgstr "Parcial"
+
+msgid "status_unknown"
+msgstr "Desconocido"
+
+# =============================================================================
+# Errores y Mensajes
+# =============================================================================
+
+msgid "error_not_found"
+msgstr "El recurso solicitado no fue encontrado."
+
+msgid "error_unauthorized"
+msgstr "No esta autorizado para realizar esta accion."
+
+msgid "error_server"
+msgstr "Ocurrio un error interno del servidor. Por favor, intente de nuevo mas tarde."
+
+msgid "error_validation"
+msgstr "Error de validacion. Por favor, verifique su entrada."
+
+msgid "error_duplicate_aip"
+msgstr "Este AIP ya esta registrado."
+
+msgid "msg_aip_registered"
+msgstr "AIP registrado exitosamente."
+
+msgid "msg_verification_queued"
+msgstr "La verificacion ha sido puesta en cola. Los resultados estaran disponibles en breve."
+
+msgid "msg_repair_started"
+msgstr "El proceso de reparacion automatica ha sido iniciado."
+
+msgid "msg_settings_saved"
+msgstr "Configuracion guardada exitosamente."
+
+msgid "msg_chain_verified"
+msgstr "Verificacion de la cadena de auditoria completada."
+
+# =============================================================================
+# Marcas de Tiempo y Formato
+# =============================================================================
+
+msgid "time_never"
+msgstr "Nunca"
+
+msgid "time_just_now"
+msgstr "Justo ahora"
+
+msgid "time_minutes_ago"
+msgstr "Hace %(count)s minutos"
+
+msgid "time_hours_ago"
+msgstr "Hace %(count)s horas"
+
+msgid "time_days_ago"
+msgstr "Hace %(count)s dias"

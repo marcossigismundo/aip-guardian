@@ -1,0 +1,295 @@
+/* ============================================================
+   AIP Integrity Guardian — Custom Styles
+   Complements Tailwind CSS, adds dark mode, animations,
+   custom scrollbars, and print styles.
+   ============================================================ */
+
+/* ── CSS Custom Properties ─────────────────────────────────── */
+:root {
+    --color-bg: #f8fafc;
+    --color-surface: #ffffff;
+    --color-border: #e2e8f0;
+    --color-text: #0f172a;
+    --color-text-muted: #64748b;
+    --color-accent: #6366f1;
+    --color-accent-light: #e0e7ff;
+    --scrollbar-thumb: #cbd5e1;
+    --scrollbar-track: transparent;
+}
+
+.dark {
+    --color-bg: #020617;
+    --color-surface: #0f172a;
+    --color-border: #1e293b;
+    --color-text: #f1f5f9;
+    --color-text-muted: #94a3b8;
+    --color-accent: #818cf8;
+    --color-accent-light: #1e1b4b;
+    --scrollbar-thumb: #334155;
+    --scrollbar-track: transparent;
+}
+
+/* ── Custom Scrollbar ──────────────────────────────────────── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* ── Animations ────────────────────────────────────────────── */
+
+/* Pulse for status indicators */
+@keyframes status-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.status-pulse {
+    animation: status-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Fade in for page content */
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.3s ease-out;
+}
+
+/* Status badge transition */
+@keyframes status-change {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.7;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.status-transition {
+    animation: status-change 0.3s ease-out;
+}
+
+/* Shimmer loading effect */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.shimmer {
+    background: linear-gradient(
+        90deg,
+        var(--color-surface) 25%,
+        var(--color-border) 50%,
+        var(--color-surface) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+/* Spin animation for loading states */
+@keyframes gentle-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.gentle-spin {
+    animation: gentle-spin 1.5s linear infinite;
+}
+
+/* ── Navigation ────────────────────────────────────────────── */
+.nav-link {
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: var(--color-accent);
+    border-radius: 9999px;
+    transition: height 0.2s ease;
+}
+
+.nav-link:hover::before,
+.nav-link.active::before {
+    height: 60%;
+}
+
+/* ── Table Enhancements ────────────────────────────────────── */
+table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--color-surface);
+}
+
+.dark table thead th {
+    background: var(--color-surface);
+}
+
+/* ── Form Elements ─────────────────────────────────────────── */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.5);
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+}
+
+/* Focus ring standardization */
+[type='text']:focus,
+[type='email']:focus,
+[type='url']:focus,
+[type='password']:focus,
+[type='number']:focus,
+[type='date']:focus,
+select:focus,
+textarea:focus {
+    --tw-ring-color: var(--color-accent);
+    --tw-ring-opacity: 0.2;
+}
+
+/* ── Transitions ───────────────────────────────────────────── */
+.theme-transition * {
+    transition: background-color 0.2s ease,
+                border-color 0.2s ease,
+                color 0.2s ease;
+}
+
+/* ── Print Styles ──────────────────────────────────────────── */
+@media print {
+    /* Hide navigation and interactive elements */
+    aside,
+    header,
+    footer,
+    .no-print,
+    button,
+    [x-data] .fixed {
+        display: none !important;
+    }
+
+    /* Reset layout for printing */
+    .lg\:pl-64 {
+        padding-left: 0 !important;
+    }
+
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 10pt;
+    }
+
+    /* Ensure cards are visible */
+    .rounded-2xl {
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
+
+    /* Full-width tables */
+    table {
+        font-size: 9pt;
+    }
+
+    /* Show full text in print */
+    .truncate {
+        overflow: visible !important;
+        text-overflow: clip !important;
+        white-space: normal !important;
+    }
+
+    /* Page margins */
+    @page {
+        margin: 1.5cm;
+    }
+
+    /* Print header */
+    main::before {
+        content: "AIP Integrity Guardian - Report";
+        display: block;
+        font-size: 16pt;
+        font-weight: bold;
+        margin-bottom: 1cm;
+        padding-bottom: 0.5cm;
+        border-bottom: 2px solid black;
+    }
+}
+
+/* ── Utility Classes ───────────────────────────────────────── */
+
+/* Gradient text */
+.gradient-text {
+    background: linear-gradient(135deg, var(--color-accent), #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Glass effect */
+.glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Subtle hover lift */
+.hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark .hover-lift:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}

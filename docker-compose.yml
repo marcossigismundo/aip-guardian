@@ -1,0 +1,154 @@
+# =============================================================================
+# AIP Integrity Guardian — Docker Compose
+# =============================================================================
+# Services: web, worker, beat, db (PostgreSQL), redis
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # FastAPI web application
+  # ---------------------------------------------------------------------------
+  guardian-web:
+    build: .
+    container_name: guardian-web
+    ports:
+      - "${GUARDIAN_PORT:-8001}:8001"
+    depends_on:
+      guardian-db:
+        condition: service_healthy
+      guardian-redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://guardian:${POSTGRES_PASSWORD:-password}@guardian-db:5432/guardian_db"
+      CELERY_BROKER_URL: "redis://guardian-redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://guardian-redis:6379/1"
+      GUARDIAN_SECRET_KEY: "${GUARDIAN_SECRET_KEY:-change-me-in-production}"
+      GUARDIAN_API_TOKEN: "${GUARDIAN_API_TOKEN:-change-me-generate-a-secure-token}"
+      GUARDIAN_HMAC_KEY_FILE: "/run/secrets/hmac_key"
+      GUARDIAN_DEBUG: "${GUARDIAN_DEBUG:-false}"
+      GUARDIAN_LOG_LEVEL: "${GUARDIAN_LOG_LEVEL:-INFO}"
+      ARCHIVEMATICA_SS_URL: "${ARCHIVEMATICA_SS_URL:-http://localhost:8000}"
+      ARCHIVEMATICA_SS_USER: "${ARCHIVEMATICA_SS_USER:-admin}"
+      ARCHIVEMATICA_SS_API_KEY: "${ARCHIVEMATICA_SS_API_KEY:-}"
+      ARCHIVEMATICA_STORAGE_PATH: "${ARCHIVEMATICA_STORAGE_PATH:-/var/archivematica/sharedDirectory}"
+      GUARDIAN_TSA_URL: "${GUARDIAN_TSA_URL:-https://freetsa.org/tsr}"
+      GUARDIAN_ADMIN_EMAIL: "${GUARDIAN_ADMIN_EMAIL:-}"
+      GUARDIAN_WEBHOOK_URL: "${GUARDIAN_WEBHOOK_URL:-}"
+    volumes:
+      - archivematica-storage:${ARCHIVEMATICA_STORAGE_PATH:-/var/archivematica/sharedDirectory}:ro
+    secrets:
+      - hmac_key
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Celery worker — processes fixity, HMAC, repair, and anchor tasks
+  # ---------------------------------------------------------------------------
+  guardian-worker:
+    build: .
+    container_name: guardian-worker
+    command: >
+      celery -A guardian.celery_app:celery worker
+      --loglevel=info
+      --concurrency=4
+    depends_on:
+      guardian-db:
+        condition: service_healthy
+      guardian-redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://guardian:${POSTGRES_PASSWORD:-password}@guardian-db:5432/guardian_db"
+      CELERY_BROKER_URL: "redis://guardian-redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://guardian-redis:6379/1"
+      GUARDIAN_SECRET_KEY: "${GUARDIAN_SECRET_KEY:-change-me-in-production}"
+      GUARDIAN_HMAC_KEY_FILE: "/run/secrets/hmac_key"
+      GUARDIAN_LOG_LEVEL: "${GUARDIAN_LOG_LEVEL:-INFO}"
+      ARCHIVEMATICA_SS_URL: "${ARCHIVEMATICA_SS_URL:-http://localhost:8000}"
+      ARCHIVEMATICA_SS_USER: "${ARCHIVEMATICA_SS_USER:-admin}"
+      ARCHIVEMATICA_SS_API_KEY: "${ARCHIVEMATICA_SS_API_KEY:-}"
+      ARCHIVEMATICA_STORAGE_PATH: "${ARCHIVEMATICA_STORAGE_PATH:-/var/archivematica/sharedDirectory}"
+    volumes:
+      - archivematica-storage:${ARCHIVEMATICA_STORAGE_PATH:-/var/archivematica/sharedDirectory}:ro
+    secrets:
+      - hmac_key
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Celery beat — periodic task scheduler
+  # ---------------------------------------------------------------------------
+  guardian-beat:
+    build: .
+    container_name: guardian-beat
+    command: >
+      celery -A guardian.celery_app:celery beat
+      --loglevel=info
+    depends_on:
+      guardian-db:
+        condition: service_healthy
+      guardian-redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://guardian:${POSTGRES_PASSWORD:-password}@guardian-db:5432/guardian_db"
+      CELERY_BROKER_URL: "redis://guardian-redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://guardian-redis:6379/1"
+      GUARDIAN_SECRET_KEY: "${GUARDIAN_SECRET_KEY:-change-me-in-production}"
+      GUARDIAN_HMAC_KEY_FILE: "/run/secrets/hmac_key"
+      GUARDIAN_LOG_LEVEL: "${GUARDIAN_LOG_LEVEL:-INFO}"
+    secrets:
+      - hmac_key
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL database
+  # ---------------------------------------------------------------------------
+  guardian-db:
+    image: postgres:16-alpine
+    container_name: guardian-db
+    environment:
+      POSTGRES_DB: guardian_db
+      POSTGRES_USER: guardian
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-password}"
+    volumes:
+      - guardian-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guardian -d guardian_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Redis — Celery broker and result backend
+  # ---------------------------------------------------------------------------
+  guardian-redis:
+    image: redis:7-alpine
+    container_name: guardian-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  guardian-pgdata:
+    driver: local
+  archivematica-storage:
+    external: true
+
+# =============================================================================
+# Secrets
+# =============================================================================
+secrets:
+  hmac_key:
+    file: ./secrets/hmac.key

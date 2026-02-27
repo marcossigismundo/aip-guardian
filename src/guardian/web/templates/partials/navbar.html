@@ -1,0 +1,156 @@
+{#
+  Sidebar navigation partial — included in base.html.
+  Uses Alpine.js for mobile collapse and active state highlighting.
+#}
+
+<aside x-data="{ mobileOpen: false }"
+       class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white shadow-xl dark:bg-slate-900
+              border-r border-slate-200 dark:border-slate-700 transition-transform duration-200
+              lg:translate-x-0"
+       :class="mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+
+    {# Mobile overlay #}
+    <div x-show="mobileOpen" @click="mobileOpen = false"
+         class="fixed inset-0 z-[-1] bg-black/40 lg:hidden" x-transition.opacity
+         style="display: none;"></div>
+
+    {# Logo / Title #}
+    <div class="flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 dark:border-slate-700 px-5">
+        {# Shield-check icon #}
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md">
+            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+            </svg>
+        </div>
+        <div>
+            <h1 class="text-sm font-bold text-slate-900 dark:text-white leading-tight">AIP Guardian</h1>
+            <p class="text-[10px] font-medium text-indigo-500 dark:text-indigo-400 tracking-wide uppercase">{{ _("Integrity Monitor") }}</p>
+        </div>
+    </div>
+
+    {# Navigation links #}
+    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <p class="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            {{ _("Main") }}
+        </p>
+
+        {# Dashboard #}
+        <a href="/dashboard"
+           class="nav-link group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all
+                  {% if active_page == 'dashboard' %}
+                  bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 shadow-sm
+                  {% else %}
+                  text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200
+                  {% endif %}">
+            <svg class="h-5 w-5 shrink-0 {% if active_page == 'dashboard' %}text-indigo-500 dark:text-indigo-400{% else %}text-slate-400 group-hover:text-slate-500 dark:text-slate-500{% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
+            </svg>
+            {{ _("Dashboard") }}
+        </a>
+
+        {# AIPs #}
+        <a href="/aips"
+           class="nav-link group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all
+                  {% if active_page == 'aips' %}
+                  bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 shadow-sm
+                  {% else %}
+                  text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200
+                  {% endif %}">
+            <svg class="h-5 w-5 shrink-0 {% if active_page == 'aips' %}text-indigo-500 dark:text-indigo-400{% else %}text-slate-400 group-hover:text-slate-500 dark:text-slate-500{% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+            </svg>
+            {{ _("AIPs") }}
+        </a>
+
+        {# Audit Log #}
+        <a href="/audit-log"
+           class="nav-link group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all
+                  {% if active_page == 'audit_log' %}
+                  bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 shadow-sm
+                  {% else %}
+                  text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200
+                  {% endif %}">
+            <svg class="h-5 w-5 shrink-0 {% if active_page == 'audit_log' %}text-indigo-500 dark:text-indigo-400{% else %}text-slate-400 group-hover:text-slate-500 dark:text-slate-500{% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            {{ _("Audit Log") }}
+        </a>
+
+        {# Anchors #}
+        <a href="/anchors"
+           class="nav-link group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all
+                  {% if active_page == 'anchors' %}
+                  bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 shadow-sm
+                  {% else %}
+                  text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200
+                  {% endif %}">
+            <svg class="h-5 w-5 shrink-0 {% if active_page == 'anchors' %}text-indigo-500 dark:text-indigo-400{% else %}text-slate-400 group-hover:text-slate-500 dark:text-slate-500{% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+            </svg>
+            {{ _("Anchors") }}
+        </a>
+
+        <div class="my-4 border-t border-slate-200 dark:border-slate-700"></div>
+
+        <p class="px-3 mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            {{ _("System") }}
+        </p>
+
+        {# Settings #}
+        <a href="/settings"
+           class="nav-link group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all
+                  {% if active_page == 'settings' %}
+                  bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 shadow-sm
+                  {% else %}
+                  text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200
+                  {% endif %}">
+            <svg class="h-5 w-5 shrink-0 {% if active_page == 'settings' %}text-indigo-500 dark:text-indigo-400{% else %}text-slate-400 group-hover:text-slate-500 dark:text-slate-500{% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {{ _("Settings") }}
+        </a>
+
+        {# Setup #}
+        <a href="/setup"
+           class="nav-link group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all
+                  {% if active_page == 'setup' %}
+                  bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 shadow-sm
+                  {% else %}
+                  text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200
+                  {% endif %}">
+            <svg class="h-5 w-5 shrink-0 {% if active_page == 'setup' %}text-indigo-500 dark:text-indigo-400{% else %}text-slate-400 group-hover:text-slate-500 dark:text-slate-500{% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M11.42 15.17l-5.1-5.1a1.5 1.5 0 010-2.12l.88-.88a1.5 1.5 0 012.12 0l2.83 2.83 5.66-5.66a1.5 1.5 0 012.12 0l.88.88a1.5 1.5 0 010 2.12l-7.07 7.07a1.5 1.5 0 01-2.12 0l-.2-.2zM21.75 12a9.75 9.75 0 11-19.5 0 9.75 9.75 0 0119.5 0z" />
+            </svg>
+            {{ _("Setup Wizard") }}
+        </a>
+    </nav>
+
+    {# Bottom section #}
+    <div class="border-t border-slate-200 dark:border-slate-700 px-4 py-3">
+        <div class="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.745 3.745 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+            </svg>
+            <span>ISO 16363 / OAIS 14721</span>
+        </div>
+    </div>
+</aside>
+
+{# Mobile menu toggle button — visible only on small screens #}
+<button @click="$dispatch('toggle-sidebar')"
+        class="fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full
+               bg-indigo-600 text-white shadow-lg lg:hidden hover:bg-indigo-700 transition-colors
+               focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+    </svg>
+</button>

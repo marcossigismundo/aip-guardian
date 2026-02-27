@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Environment variables
+.env
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Secrets
+secrets/
+*.key
+*.pem
+
+# Alembic
+alembic/versions/__pycache__/
+
+# Compiled translations
+*.mo
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/

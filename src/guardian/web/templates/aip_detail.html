@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% from "partials/status_badge.html" import status_badge %}
+
+{% block title %}{{ _("AIP") }} {{ aip.aip_uuid|string|truncate(13, True, '...') }} - {{ _("AIP Integrity Guardian") }}{% endblock %}
+
+{% block breadcrumb %}
+<span class="text-slate-300 dark:text-slate-600">/</span>
+<a href="/aips" class="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">{{ _("AIPs") }}</a>
+<span class="text-slate-300 dark:text-slate-600">/</span>
+<span class="text-slate-500 dark:text-slate-400 font-mono text-xs">{{ aip.aip_uuid|string|truncate(13, True, '...') }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    {# ── Header ──────────────────────────────────────────────────── #}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/aips" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+            </a>
+            <div>
+                <div class="flex items-center gap-3">
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white font-mono">{{ aip.aip_uuid }}</h2>
+                    {{ status_badge(aip.last_status) }}
+                </div>
+                <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                    {{ _("Archivematica UUID") }}: <span class="font-mono text-xs">{{ aip.archivematica_uuid }}</span>
+                </p>
+            </div>
+        </div>
+
+        {# Verify Now button #}
+        <div x-data="verifyButton('{{ aip.aip_uuid }}')">
+            <button @click="verify()" :disabled="loading"
+                    class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 px-5 py-2.5 text-sm font-semibold text-white
+                           shadow-md shadow-indigo-500/25 hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                           dark:focus:ring-offset-slate-900 transition-all disabled:opacity-50 disabled:cursor-wait">
+                <svg x-show="!loading" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+                <svg x-show="loading" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span x-text="loading ? '{{ _("Verifying...") }}' : '{{ _("Verify Now") }}'"></span>
+            </button>
+        </div>
+    </div>
+
+    {# ── Info Grid ───────────────────────────────────────────────── #}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ _("Storage Path") }}</p>
+            <p class="mt-1.5 text-sm font-medium text-slate-900 dark:text-white font-mono break-all">{{ aip.storage_path or _("N/A") }}</p>
+        </div>
+        <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ _("Last Verified") }}</p>
+            <p class="mt-1.5 text-sm font-medium text-slate-900 dark:text-white">
+                {% if aip.last_verified %}
+                    {{ aip.last_verified.strftime('%Y-%m-%d %H:%M:%S') }}
+                {% else %}
+                    <span class="italic text-slate-400">{{ _("Never") }}</span>
+                {% endif %}
+            </p>
+        </div>
+        <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ _("Last HMAC Check") }}</p>
+            <p class="mt-1.5 text-sm font-medium text-slate-900 dark:text-white">
+                {% if aip.last_hmac_check %}
+                    {{ aip.last_hmac_check.strftime('%Y-%m-%d %H:%M:%S') }}
+                {% else %}
+                    <span class="italic text-slate-400">{{ _("Never") }}</span>
+                {% endif %}
+            </p>
+        </div>
+        <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ _("Content Fingerprint") }}</p>
+            <p class="mt-1.5 text-sm font-medium text-slate-900 dark:text-white font-mono truncate" title="{{ aip.content_fingerprint }}">
+                {{ aip.content_fingerprint or _("N/A") }}
+            </p>
+        </div>
+    </div>
+
+    {# Stats row #}
+    <div class="grid grid-cols-3 gap-4">
+        <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60 text-center">
+            <p class="text-3xl font-bold text-slate-900 dark:text-white">{{ aip.total_verifications }}</p>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">{{ _("Total Verifications") }}</p>
+        </div>
+        <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60 text-center">
+            <p class="text-3xl font-bold {% if aip.total_failures > 0 %}text-red-600 dark:text-red-400{% else %}text-slate-900 dark:text-white{% endif %}">{{ aip.total_failures }}</p>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">{{ _("Total Failures") }}</p>
+        </div>
+        <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60 text-center">
+            <p class="text-3xl font-bold text-slate-900 dark:text-white">{{ aip.total_files }}</p>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">{{ _("Total Files") }}</p>
+        </div>
+    </div>
+
+    {# ── Verification History Timeline ───────────────────────────── #}
+    <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+        <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">{{ _("Verification History") }}</h3>
+        </div>
+
+        {% if audit_events %}
+        <div class="px-6 py-4">
+            <div class="relative">
+                {# Timeline line #}
+                <div class="absolute left-4 top-2 bottom-2 w-px bg-slate-200 dark:bg-slate-700"></div>
+
+                <div class="space-y-6">
+                    {% for event in audit_events %}
+                    <div x-data="{ expanded: false }" class="relative flex gap-4">
+                        {# Timeline dot #}
+                        <div class="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full
+                                    {% if event.status == 'pass' %}bg-emerald-100 dark:bg-emerald-900/40{% elif event.status == 'fail' %}bg-red-100 dark:bg-red-900/40{% elif event.status == 'warning' %}bg-yellow-100 dark:bg-yellow-900/40{% else %}bg-slate-100 dark:bg-slate-700{% endif %}">
+                            {% if event.event_type == 'fixity_check' %}
+                            <svg class="h-4 w-4 {% if event.status == 'pass' %}text-emerald-600 dark:text-emerald-400{% else %}text-red-600 dark:text-red-400{% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {% elif event.event_type == 'tamper_detected' %}
+                            <svg class="h-4 w-4 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                            {% elif event.event_type == 'auto_repair' %}
+                            <svg class="h-4 w-4 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17l-5.1-5.1a1.5 1.5 0 010-2.12l.88-.88a1.5 1.5 0 012.12 0l2.83 2.83 5.66-5.66a1.5 1.5 0 012.12 0l.88.88a1.5 1.5 0 010 2.12l-7.07 7.07a1.5 1.5 0 01-2.12 0z" />
+                            </svg>
+                            {% elif event.event_type == 'hmac_verify' %}
+                            <svg class="h-4 w-4 {% if event.status == 'pass' %}text-emerald-600 dark:text-emerald-400{% else %}text-red-600 dark:text-red-400{% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                            </svg>
+                            {% else %}
+                            <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                            </svg>
+                            {% endif %}
+                        </div>
+
+                        {# Event content #}
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <span class="text-xs font-medium text-slate-900 dark:text-white">
+                                    {{ event.event_type|replace('_', ' ')|title }}
+                                </span>
+                                {{ status_badge(event.status) }}
+                                <span class="text-xs text-slate-500 dark:text-slate-400">
+                                    {{ event.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                                </span>
+                            </div>
+
+                            {% if event.details %}
+                            <button @click="expanded = !expanded"
+                                    class="mt-1 text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
+                                <span x-text="expanded ? '{{ _("Hide details") }}' : '{{ _("Show details") }}'"></span>
+                            </button>
+                            <div x-show="expanded" x-transition class="mt-2" style="display: none;">
+                                <div x-data="jsonViewer({{ event.details|tojson }})" class="rounded-lg bg-slate-50 dark:bg-slate-900/50 p-3 text-xs font-mono text-slate-700 dark:text-slate-300 overflow-x-auto">
+                                    <pre x-text="formatted"></pre>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-10 text-center">
+            <svg class="h-10 w-10 text-slate-300 dark:text-slate-600 mb-2" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-sm text-slate-500 dark:text-slate-400">{{ _("No verification history yet.") }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── HMAC Records ────────────────────────────────────────────── #}
+    <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+        <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">{{ _("HMAC Records") }}</h3>
+        </div>
+
+        {% if hmac_records %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-slate-100 dark:border-slate-700/50">
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ _("Manifest Name") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ _("Algorithm") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ _("HMAC") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ _("Registered") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ _("Last Verified") }}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                    {% for hmac in hmac_records %}
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="px-6 py-3.5 text-sm font-medium text-slate-900 dark:text-white font-mono">{{ hmac.manifest_name }}</td>
+                        <td class="px-6 py-3.5 text-xs text-slate-600 dark:text-slate-300">{{ hmac.algorithm }}</td>
+                        <td class="px-6 py-3.5 text-xs font-mono text-slate-500 dark:text-slate-400" title="{{ hmac.hmac_value }}">{{ hmac.hmac_value[:20] }}...</td>
+                        <td class="px-6 py-3.5 text-xs text-slate-500 dark:text-slate-400">{{ hmac.registered_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="px-6 py-3.5 text-xs text-slate-500 dark:text-slate-400">
+                            {% if hmac.last_verified_at %}
+                                {{ hmac.last_verified_at.strftime('%Y-%m-%d %H:%M') }}
+                            {% else %}
+                                <span class="italic text-slate-400">{{ _("Never") }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-10 text-center">
+            <p class="text-sm text-slate-500 dark:text-slate-400">{{ _("No HMAC records found for this AIP.") }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── Repair History ──────────────────────────────────────────── #}
+    {% if repair_records %}
+    <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60 dark:bg-slate-800 dark:ring-slate-700/60">
+        <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">{{ _("Repair History") }}</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-slate-100 dark:border-slate-700/50">
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ _("ID") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ _("Status") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ _("Source Replica") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ _("Files Repaired") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ _("Repaired At") }}</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ _("Details") }}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                    {% for repair in repair_records %}
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="px-6 py-3.5 text-xs font-medium text-slate-900 dark:text-white">#{{ repair.id }}</td>
+                        <td class="px-6 py-3.5">{{ status_badge(repair.status) }}</td>
+                        <td class="px-6 py-3.5 text-xs font-mono text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{{ repair.source_replica or _("N/A") }}</td>
+                        <td class="px-6 py-3.5 text-xs text-slate-500 dark:text-slate-400">
+                            {% if repair.files_repaired %}
+                                {{ repair.files_repaired|length }} {{ _("files") }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-3.5 text-xs text-slate-500 dark:text-slate-400">{{ repair.repaired_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="px-6 py-3.5" x-data="{ showRepairDetails: false }">
+                            {% if repair.details %}
+                            <button @click="showRepairDetails = !showRepairDetails"
+                                    class="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 transition-colors">
+                                <span x-text="showRepairDetails ? '{{ _("Hide") }}' : '{{ _("Show") }}'"></span>
+                            </button>
+                            <div x-show="showRepairDetails" x-transition class="mt-2" style="display: none;">
+                                <div x-data="jsonViewer({{ repair.details|tojson }})" class="rounded-lg bg-slate-50 dark:bg-slate-900/50 p-2 text-xs font-mono overflow-x-auto">
+                                    <pre x-text="formatted" class="text-slate-700 dark:text-slate-300"></pre>
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="text-xs text-slate-400">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
