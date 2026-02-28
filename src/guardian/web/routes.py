@@ -32,9 +32,10 @@ templates = Jinja2Templates(directory=str(_template_dir))
 
 # ── Helper: async DB session ─────────────────────────────────────
 
-async def _get_db() -> AsyncSession:
-    """Return an async session (not as a generator — for use inside routes)."""
-    return async_session_factory()
+async def _get_db():
+    """Yield an async session for use inside routes."""
+    async with async_session_factory() as session:
+        yield session
 
 
 # ── Helper: mask sensitive strings ───────────────────────────────

@@ -101,11 +101,23 @@ async def get_chain_status(
             broken_links.append(record.id)
 
         # Recompute the record hash to detect tampering
-        payload = (
-            f"{record.id}|{record.aip_uuid}|{record.event_type}|"
-            f"{record.status}|{record.previous_hash}"
+        # Must match the formula in AuditLogger._compute_record_hash
+        import json
+        details_json = json.dumps(
+            record.details if record.details else {},
+            sort_keys=True,
+            default=str,
         )
-        computed_hash = hashlib.sha256(payload.encode()).hexdigest()
+        iso_ts = record.created_at.isoformat()
+        payload = "|".join([
+            str(record.aip_uuid),
+            record.event_type,
+            record.status,
+            details_json,
+            record.previous_hash,
+            iso_ts,
+        ])
+        computed_hash = hashlib.sha256(payload.encode("utf-8")).hexdigest()
         if record.record_hash and record.record_hash != computed_hash:
             if record.id not in broken_links:
                 broken_links.append(record.id)

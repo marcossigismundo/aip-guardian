@@ -60,6 +60,10 @@ COPY alembic/ ./alembic/
 COPY alembic.ini ./
 COPY src/ ./src/
 
+# Compile i18n .po -> .mo translation files (babel is available from pip install)
+RUN pybabel compile -d /app/src/guardian/locale 2>/dev/null || \
+    echo "Note: .mo files should be pre-compiled in the repo"
+
 # Set PYTHONPATH so guardian package is importable
 ENV PYTHONPATH=/app/src
 ENV PYTHONDONTWRITEBYTECODE=1
