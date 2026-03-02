@@ -27,6 +27,7 @@
         <div class="py-1">
             {% for code, name in supported_languages.items() %}
             <form method="post" action="/set-language" class="block">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" name="language" value="{{ code }}">
                 <button type="submit"
                         class="flex w-full items-center gap-2 px-4 py-2 text-sm

@@ -212,6 +212,7 @@ async def dashboard(request: Request):
             "recent_events": recent_events,
             "last_anchor": last_anchor,
             "chain_status": chain_status,
+            "csrf_token": _get_or_create_csrf_token(request),
             **i18n,
         },
     )
@@ -264,6 +265,7 @@ async def aips_list(
             "total_pages": total_pages,
             "filter_status": status,
             "search_query": search,
+            "csrf_token": _get_or_create_csrf_token(request),
             **i18n,
         },
     )
@@ -296,6 +298,7 @@ async def aip_detail(request: Request, aip_uuid: str):
                     "total_pages": 1,
                     "filter_status": None,
                     "search_query": aip_uuid,
+                    "csrf_token": _get_or_create_csrf_token(request),
                     **i18n,
                 },
             )
@@ -334,6 +337,7 @@ async def aip_detail(request: Request, aip_uuid: str):
             "audit_events": audit_events,
             "hmac_records": hmac_records,
             "repair_records": repair_records,
+            "csrf_token": _get_or_create_csrf_token(request),
             **i18n,
         },
     )
@@ -409,6 +413,7 @@ async def audit_log(
             "filter_status": status,
             "filter_date_from": date_from,
             "filter_date_to": date_to,
+            "csrf_token": _get_or_create_csrf_token(request),
             **i18n,
         },
     )
@@ -444,6 +449,7 @@ async def anchors(request: Request):
             "anchors": anchors_list,
             "total_anchors": total_anchors,
             "last_anchor_date": last_anchor_date,
+            "csrf_token": _get_or_create_csrf_token(request),
             **i18n,
         },
     )
@@ -497,6 +503,7 @@ async def settings_page(request: Request):
             "request": request,
             "active_page": "settings",
             "config": config,
+            "csrf_token": _get_or_create_csrf_token(request),
             **i18n,
         },
     )
@@ -515,6 +522,7 @@ async def setup_page(request: Request):
         {
             "request": request,
             "active_page": "setup",
+            "csrf_token": _get_or_create_csrf_token(request),
             **i18n,
         },
     )
