@@ -19,14 +19,15 @@ services:
       guardian-redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: "postgresql+asyncpg://guardian:${POSTGRES_PASSWORD:-password}@guardian-db:5432/guardian_db"
+      DATABASE_URL: "postgresql+asyncpg://guardian:${POSTGRES_PASSWORD}@guardian-db:5432/guardian_db"
       CELERY_BROKER_URL: "redis://guardian-redis:6379/0"
       CELERY_RESULT_BACKEND: "redis://guardian-redis:6379/1"
-      GUARDIAN_SECRET_KEY: "${GUARDIAN_SECRET_KEY:-change-me-in-production}"
-      GUARDIAN_API_TOKEN: "${GUARDIAN_API_TOKEN:-change-me-generate-a-secure-token}"
+      GUARDIAN_SECRET_KEY: "${GUARDIAN_SECRET_KEY}"
+      GUARDIAN_API_TOKEN: "${GUARDIAN_API_TOKEN}"
       GUARDIAN_HMAC_KEY_FILE: "/run/secrets/hmac_key"
       GUARDIAN_DEBUG: "${GUARDIAN_DEBUG:-false}"
       GUARDIAN_LOG_LEVEL: "${GUARDIAN_LOG_LEVEL:-INFO}"
+      GUARDIAN_ALLOWED_HOSTS: "${GUARDIAN_ALLOWED_HOSTS:-localhost,127.0.0.1}"
       ARCHIVEMATICA_SS_URL: "${ARCHIVEMATICA_SS_URL:-http://localhost:8000}"
       ARCHIVEMATICA_SS_USER: "${ARCHIVEMATICA_SS_USER:-admin}"
       ARCHIVEMATICA_SS_API_KEY: "${ARCHIVEMATICA_SS_API_KEY:-}"
@@ -34,6 +35,8 @@ services:
       GUARDIAN_TSA_URL: "${GUARDIAN_TSA_URL:-https://freetsa.org/tsr}"
       GUARDIAN_ADMIN_EMAIL: "${GUARDIAN_ADMIN_EMAIL:-}"
       GUARDIAN_WEBHOOK_URL: "${GUARDIAN_WEBHOOK_URL:-}"
+      DB_POOL_SIZE: "${DB_POOL_SIZE:-10}"
+      DB_MAX_OVERFLOW: "${DB_MAX_OVERFLOW:-20}"
     volumes:
       - archivematica-storage:${ARCHIVEMATICA_STORAGE_PATH:-/var/archivematica/sharedDirectory}:ro
     secrets:
@@ -43,7 +46,15 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
+      start_period: 45s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2.0"
+        reservations:
+          memory: 256M
+          cpus: "0.5"
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
@@ -52,22 +63,24 @@ services:
   guardian-worker:
     build: .
     container_name: guardian-worker
+    entrypoint: ["docker-entrypoint.sh"]
     command: >
       celery -A guardian.celery_app:celery worker
-      --loglevel=info
-      --concurrency=4
+      --loglevel=${GUARDIAN_LOG_LEVEL:-info}
+      --concurrency=${CELERY_CONCURRENCY:-4}
     depends_on:
       guardian-db:
         condition: service_healthy
       guardian-redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: "postgresql+asyncpg://guardian:${POSTGRES_PASSWORD:-password}@guardian-db:5432/guardian_db"
+      DATABASE_URL: "postgresql+asyncpg://guardian:${POSTGRES_PASSWORD}@guardian-db:5432/guardian_db"
       CELERY_BROKER_URL: "redis://guardian-redis:6379/0"
       CELERY_RESULT_BACKEND: "redis://guardian-redis:6379/1"
-      GUARDIAN_SECRET_KEY: "${GUARDIAN_SECRET_KEY:-change-me-in-production}"
+      GUARDIAN_SECRET_KEY: "${GUARDIAN_SECRET_KEY}"
       GUARDIAN_HMAC_KEY_FILE: "/run/secrets/hmac_key"
       GUARDIAN_LOG_LEVEL: "${GUARDIAN_LOG_LEVEL:-INFO}"
+      GUARDIAN_DEBUG: "${GUARDIAN_DEBUG:-false}"
       ARCHIVEMATICA_SS_URL: "${ARCHIVEMATICA_SS_URL:-http://localhost:8000}"
       ARCHIVEMATICA_SS_USER: "${ARCHIVEMATICA_SS_USER:-admin}"
       ARCHIVEMATICA_SS_API_KEY: "${ARCHIVEMATICA_SS_API_KEY:-}"
@@ -76,6 +89,14 @@ services:
       - archivematica-storage:${ARCHIVEMATICA_STORAGE_PATH:-/var/archivematica/sharedDirectory}:ro
     secrets:
       - hmac_key
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+        reservations:
+          memory: 512M
+          cpus: "0.5"
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
@@ -84,23 +105,30 @@ services:
   guardian-beat:
     build: .
     container_name: guardian-beat
+    entrypoint: ["docker-entrypoint.sh"]
     command: >
       celery -A guardian.celery_app:celery beat
-      --loglevel=info
+      --loglevel=${GUARDIAN_LOG_LEVEL:-info}
     depends_on:
       guardian-db:
         condition: service_healthy
       guardian-redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: "postgresql+asyncpg://guardian:${POSTGRES_PASSWORD:-password}@guardian-db:5432/guardian_db"
+      DATABASE_URL: "postgresql+asyncpg://guardian:${POSTGRES_PASSWORD}@guardian-db:5432/guardian_db"
       CELERY_BROKER_URL: "redis://guardian-redis:6379/0"
       CELERY_RESULT_BACKEND: "redis://guardian-redis:6379/1"
-      GUARDIAN_SECRET_KEY: "${GUARDIAN_SECRET_KEY:-change-me-in-production}"
+      GUARDIAN_SECRET_KEY: "${GUARDIAN_SECRET_KEY}"
       GUARDIAN_HMAC_KEY_FILE: "/run/secrets/hmac_key"
       GUARDIAN_LOG_LEVEL: "${GUARDIAN_LOG_LEVEL:-INFO}"
+      GUARDIAN_DEBUG: "${GUARDIAN_DEBUG:-false}"
     secrets:
       - hmac_key
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
@@ -112,7 +140,7 @@ services:
     environment:
       POSTGRES_DB: guardian_db
       POSTGRES_USER: guardian
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-password}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
     volumes:
       - guardian-pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -121,6 +149,13 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 256M
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
@@ -129,12 +164,20 @@ services:
   guardian-redis:
     image: redis:7-alpine
     container_name: guardian-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - guardian-redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 5s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
     restart: unless-stopped
 
 # =============================================================================
@@ -142,6 +185,8 @@ services:
 # =============================================================================
 volumes:
   guardian-pgdata:
+    driver: local
+  guardian-redis-data:
     driver: local
   archivematica-storage:
     external: true

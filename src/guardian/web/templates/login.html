@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}" x-data="themeToggle()" :class="{ 'dark': dark }">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _("Login") }} — {{ _("AIP Integrity Guardian") }}</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen flex items-center justify-center bg-slate-100 font-sans text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+
+    <div class="w-full max-w-md px-6">
+        <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+
+            {# Logo / Title #}
+            <div class="mb-8 text-center">
+                <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-indigo-600 text-white">
+                    <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold">{{ _("AIP Integrity Guardian") }}</h1>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ _("Dashboard Login") }}</p>
+            </div>
+
+            {# Error message #}
+            {% if error %}
+            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300">
+                {{ _("Invalid API token. Please try again.") }}
+            </div>
+            {% endif %}
+
+            {# Login form #}
+            <form method="POST" action="/login" class="space-y-5">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                <div>
+                    <label for="api_token" class="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {{ _("API Token") }}
+                    </label>
+                    <input type="password"
+                           id="api_token"
+                           name="api_token"
+                           required
+                           autocomplete="current-password"
+                           placeholder="Enter your GUARDIAN_API_TOKEN"
+                           class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm
+                                  placeholder-slate-400 shadow-sm transition-colors
+                                  focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20
+                                  dark:border-slate-600 dark:bg-slate-800 dark:placeholder-slate-500
+                                  dark:focus:border-indigo-400 dark:focus:ring-indigo-400/20">
+                </div>
+
+                <button type="submit"
+                        class="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white
+                               shadow-sm transition-colors hover:bg-indigo-700
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500/50
+                               dark:bg-indigo-500 dark:hover:bg-indigo-600">
+                    {{ _("Sign In") }}
+                </button>
+            </form>
+
+            <p class="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">
+                ISO 16363 &amp; OAIS ISO 14721
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function themeToggle() {
+            return {
+                dark: localStorage.getItem('theme') === 'dark' ||
+                      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches),
+                toggle() {
+                    this.dark = !this.dark;
+                    localStorage.setItem('theme', this.dark ? 'dark' : 'light');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

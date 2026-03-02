@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import hmac as hmac_mod
+import secrets
 import sys
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Form, Query, Request
+from fastapi import APIRouter, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import desc, func, select
@@ -47,6 +49,31 @@ def _mask(value: str, show: int = 4) -> str:
     return value[:show] + "*" * (len(value) - show)
 
 
+# ── Helper: dashboard authentication ─────────────────────────────
+
+def _is_authenticated(request: Request) -> bool:
+    """Check if the current session contains a valid dashboard login."""
+    return request.session.get("dashboard_authenticated") is True
+
+
+# ── Helper: CSRF token ───────────────────────────────────────────
+
+def _get_or_create_csrf_token(request: Request) -> str:
+    """Return existing CSRF token from session or generate a new one."""
+    token = request.session.get("csrf_token")
+    if not token:
+        token = secrets.token_hex(32)
+        request.session["csrf_token"] = token
+    return token
+
+
+def _verify_csrf_token(request: Request, token: str) -> None:
+    """Verify that the submitted CSRF token matches the session token."""
+    expected = request.session.get("csrf_token", "")
+    if not expected or not hmac_mod.compare_digest(token, expected):
+        raise HTTPException(status_code=403, detail="Invalid CSRF token")
+
+
 # ── GET / — redirect to dashboard ───────────────────────────────
 
 @web_router.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -54,10 +81,58 @@ async def root():
     return RedirectResponse(url="/dashboard", status_code=302)
 
 
+# ── GET /login — dashboard login form ────────────────────────────
+
+@web_router.get("/login", response_class=HTMLResponse, include_in_schema=False)
+async def login_page(request: Request, error: Optional[str] = Query(None)):
+    if _is_authenticated(request):
+        return RedirectResponse(url="/dashboard", status_code=302)
+    i18n = template_globals(request)
+    csrf_token = _get_or_create_csrf_token(request)
+    return templates.TemplateResponse(
+        "login.html",
+        {
+            "request": request,
+            "active_page": "login",
+            "error": error,
+            "csrf_token": csrf_token,
+            **i18n,
+        },
+    )
+
+
+# ── POST /login — authenticate ───────────────────────────────────
+
+@web_router.post("/login", include_in_schema=False)
+async def login_submit(
+    request: Request,
+    api_token: str = Form(...),
+    csrf_token: str = Form(...),
+):
+    _verify_csrf_token(request, csrf_token)
+    settings = get_settings()
+    if hmac_mod.compare_digest(api_token, settings.guardian_api_token):
+        request.session["dashboard_authenticated"] = True
+        # Rotate CSRF token after login
+        request.session["csrf_token"] = secrets.token_hex(32)
+        return RedirectResponse(url="/dashboard", status_code=302)
+    return RedirectResponse(url="/login?error=invalid_token", status_code=302)
+
+
+# ── GET /logout ──────────────────────────────────────────────────
+
+@web_router.get("/logout", include_in_schema=False)
+async def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/login", status_code=302)
+
+
 # ── GET /dashboard ───────────────────────────────────────────────
 
 @web_router.get("/dashboard", response_class=HTMLResponse, include_in_schema=False)
 async def dashboard(request: Request):
+    if not _is_authenticated(request):
+        return RedirectResponse(url="/login", status_code=302)
     i18n = template_globals(request)
     async with async_session_factory() as db:
         # Aggregate counts by status
@@ -87,13 +162,12 @@ async def dashboard(request: Request):
         )
         last_anchor = anchor_result.scalar_one_or_none()
 
-        # Chain status — simple check: count audit records
+        # Chain status — check the latest chain_verify audit event
         total_records_result = await db.execute(select(func.count()).select_from(AuditLog))
         total_records = total_records_result.scalar() or 0
 
         chain_status = None
         if total_records > 0:
-            # Simple chain status representation
             class _ChainStatus:
                 def __init__(self, valid: bool, total_records: int, last_checked, genesis_hash: str):
                     self.valid = valid
@@ -107,10 +181,25 @@ async def dashboard(request: Request):
             )
             genesis = genesis_result.scalar_one_or_none()
 
+            # Check the latest chain_verify result instead of hardcoding True
+            chain_verify_result = await db.execute(
+                select(AuditLog)
+                .where(AuditLog.event_type == "chain_verify")
+                .order_by(desc(AuditLog.created_at))
+                .limit(1)
+            )
+            last_chain_verify = chain_verify_result.scalar_one_or_none()
+
+            chain_valid = True  # default if no verification has run yet
+            last_checked = genesis.created_at if genesis else None
+            if last_chain_verify:
+                chain_valid = last_chain_verify.status == "pass"
+                last_checked = last_chain_verify.created_at
+
             chain_status = _ChainStatus(
-                valid=True,  # Simplified — full verification via chain_verifier service
+                valid=chain_valid,
                 total_records=total_records,
-                last_checked=genesis.created_at if genesis else None,
+                last_checked=last_checked,
                 genesis_hash=genesis.record_hash if genesis else "",
             )
 
@@ -137,6 +226,8 @@ async def aips_list(
     search: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
 ):
+    if not _is_authenticated(request):
+        return RedirectResponse(url="/login", status_code=302)
     i18n = template_globals(request)
     page_size = 25
 
@@ -182,6 +273,8 @@ async def aips_list(
 
 @web_router.get("/aips/{aip_uuid}", response_class=HTMLResponse, include_in_schema=False)
 async def aip_detail(request: Request, aip_uuid: str):
+    if not _is_authenticated(request):
+        return RedirectResponse(url="/login", status_code=302)
     i18n = template_globals(request)
 
     async with async_session_factory() as db:
@@ -258,6 +351,8 @@ async def audit_log(
     date_to: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
 ):
+    if not _is_authenticated(request):
+        return RedirectResponse(url="/login", status_code=302)
     i18n = template_globals(request)
     page_size = 50
 
@@ -289,8 +384,15 @@ async def audit_log(
         result = await db.execute(query)
         events = result.scalars().all()
 
-        # Simple chain validity check
-        chain_valid = True  # Full check deferred to chain_verifier service
+        # Check actual chain status from latest chain_verify event
+        chain_verify_result = await db.execute(
+            select(AuditLog)
+            .where(AuditLog.event_type == "chain_verify")
+            .order_by(desc(AuditLog.created_at))
+            .limit(1)
+        )
+        last_verify = chain_verify_result.scalar_one_or_none()
+        chain_valid = last_verify.status == "pass" if last_verify else True
 
     return templates.TemplateResponse(
         "audit_log.html",
@@ -316,6 +418,8 @@ async def audit_log(
 
 @web_router.get("/anchors", response_class=HTMLResponse, include_in_schema=False)
 async def anchors(request: Request):
+    if not _is_authenticated(request):
+        return RedirectResponse(url="/login", status_code=302)
     i18n = template_globals(request)
 
     async with async_session_factory() as db:
@@ -349,6 +453,8 @@ async def anchors(request: Request):
 
 @web_router.get("/settings", response_class=HTMLResponse, include_in_schema=False)
 async def settings_page(request: Request):
+    if not _is_authenticated(request):
+        return RedirectResponse(url="/login", status_code=302)
     i18n = template_globals(request)
     settings = get_settings()
 
@@ -370,7 +476,7 @@ async def settings_page(request: Request):
         "version": "1.0.0",
         "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
         "database_url_masked": _mask(settings.database_url, 20),
-        "redis_url": settings.celery_broker_url,
+        "redis_url": _mask(settings.celery_broker_url, 10),
         "debug": settings.guardian_debug,
         "archivematica_ss_url": settings.archivematica_ss_url,
         "archivematica_ss_user": settings.archivematica_ss_user,
@@ -382,7 +488,7 @@ async def settings_page(request: Request):
         "admin_email": settings.guardian_admin_email,
         "smtp_host": settings.guardian_smtp_host,
         "smtp_port": settings.guardian_smtp_port,
-        "webhook_url": settings.guardian_webhook_url,
+        "webhook_url": _mask(settings.guardian_webhook_url, 10) if settings.guardian_webhook_url else "",
     }
 
     return templates.TemplateResponse(
@@ -400,6 +506,8 @@ async def settings_page(request: Request):
 
 @web_router.get("/setup", response_class=HTMLResponse, include_in_schema=False)
 async def setup_page(request: Request):
+    if not _is_authenticated(request):
+        return RedirectResponse(url="/login", status_code=302)
     i18n = template_globals(request)
 
     return templates.TemplateResponse(
@@ -418,8 +526,11 @@ async def setup_page(request: Request):
 async def set_language(
     request: Request,
     language: str = Form(...),
+    csrf_token: str = Form(""),
 ):
     """Set language preference cookie and redirect back."""
+    _verify_csrf_token(request, csrf_token)
+
     # Validate language
     if language not in SUPPORTED_LANGUAGES:
         language = "en"

@@ -15,8 +15,8 @@ from guardian.config import get_settings
 logger = logging.getLogger(__name__)
 
 
-@shared_task
-def submit_daily_anchor() -> dict[str, Any]:
+@shared_task(bind=True, max_retries=3)
+def submit_daily_anchor(self: Any) -> dict[str, Any]:
     """Anchor today's unanchored audit records via RFC 3161.
 
     Steps
@@ -94,8 +94,8 @@ def submit_daily_anchor() -> dict[str, Any]:
             "batch_hash": anchor_result.batch_hash,
         }
 
-    except Exception:
-        logger.exception("submit_daily_anchor failed")
-        raise
+    except Exception as exc:
+        logger.exception("submit_daily_anchor failed, retrying")
+        raise self.retry(exc=exc, countdown=180) from exc
     finally:
         sync_engine.dispose()

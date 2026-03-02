@@ -2,24 +2,33 @@
 
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from guardian.config import get_settings
 from guardian.i18n import _load_translations
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Startup / shutdown lifecycle."""
+    settings.validate_production_secrets()
     _load_translations()
+    logger.info(
+        "AIP Integrity Guardian started (debug=%s, hosts=%s)",
+        settings.guardian_debug,
+        settings.guardian_allowed_hosts,
+    )
     yield
 
 
@@ -33,11 +42,20 @@ def create_app() -> FastAPI:
         ),
         version="1.0.0",
         lifespan=lifespan,
-        docs_url="/docs",
-        redoc_url="/redoc",
+        docs_url="/docs" if settings.guardian_debug else None,
+        redoc_url="/redoc" if settings.guardian_debug else None,
     )
 
-    # Middleware
+    # CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.allowed_hosts_list,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["*"],
+    )
+
+    # Session middleware
     app.add_middleware(
         SessionMiddleware,
         secret_key=settings.guardian_secret_key,

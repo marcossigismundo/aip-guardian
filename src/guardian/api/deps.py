@@ -65,7 +65,9 @@ async def verify_token(request: Request) -> None:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    if parts[1] != settings.guardian_api_token:
+    import hmac as hmac_mod
+
+    if not hmac_mod.compare_digest(parts[1], settings.guardian_api_token):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API token",

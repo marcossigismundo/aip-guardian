@@ -10,8 +10,6 @@ to be called from Celery tasks that operate within sync workers.
 
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 from datetime import datetime, timezone
 
@@ -20,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from guardian.models.audit_log import AuditLog
 from guardian.services.fixity_verifier import VerificationResult
+from guardian.services.hash_utils import compute_record_hash
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +71,7 @@ class AuditLogger:
         now = datetime.now(timezone.utc)
 
         # Compute the record hash.
-        record_hash = cls._compute_record_hash(
+        record_hash = compute_record_hash(
             aip_uuid=aip_uuid,
             event_type=event_type,
             status=status,
@@ -182,30 +181,4 @@ class AuditLogger:
         row = session.execute(stmt).scalar_one_or_none()
         return row if row is not None else _GENESIS_HASH
 
-    @staticmethod
-    def _compute_record_hash(
-        *,
-        aip_uuid: str,
-        event_type: str,
-        status: str,
-        details: dict,
-        previous_hash: str,
-        timestamp: datetime,
-    ) -> str:
-        """Compute the SHA-256 hash that seals this record into the chain.
-
-        The hash input is the concatenation (with ``|`` separator) of:
-        ``aip_uuid | event_type | status | details_json | previous_hash | iso_timestamp``
-        """
-        details_json = json.dumps(details, sort_keys=True, default=str)
-        iso_ts = timestamp.isoformat()
-
-        payload = "|".join([
-            str(aip_uuid),
-            event_type,
-            status,
-            details_json,
-            previous_hash,
-            iso_ts,
-        ])
-        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    _compute_record_hash = staticmethod(compute_record_hash)

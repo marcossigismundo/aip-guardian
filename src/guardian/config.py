@@ -2,10 +2,19 @@
 
 from __future__ import annotations
 
+import logging
+import sys
 from functools import lru_cache
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
+
+_INSECURE_DEFAULTS = frozenset({
+    "change-me-in-production",
+    "change-me-generate-a-secure-token",
+})
 
 
 class Settings(BaseSettings):
@@ -54,6 +63,10 @@ class Settings(BaseSettings):
     guardian_smtp_password: str = ""
     guardian_webhook_url: str = ""
 
+    # --- Database pool ---
+    db_pool_size: int = 10
+    db_max_overflow: int = 20
+
     # --- Paths ---
     base_dir: Path = Path(__file__).resolve().parent.parent.parent
 
@@ -65,6 +78,41 @@ class Settings(BaseSettings):
     @property
     def allowed_hosts_list(self) -> list[str]:
         return [h.strip() for h in self.guardian_allowed_hosts.split(",") if h.strip()]
+
+    def validate_production_secrets(self) -> None:
+        """Abort startup if insecure default secrets are still in use.
+
+        In debug mode this emits warnings instead of crashing, so that
+        local development remains friction-free.
+        """
+        issues: list[str] = []
+
+        if self.guardian_secret_key in _INSECURE_DEFAULTS:
+            issues.append(
+                "GUARDIAN_SECRET_KEY is still set to the insecure default. "
+                "Generate a strong key: python -c \"import secrets; print(secrets.token_hex(32))\""
+            )
+        if self.guardian_api_token in _INSECURE_DEFAULTS:
+            issues.append(
+                "GUARDIAN_API_TOKEN is still set to the insecure default. "
+                "Generate a strong token: python -c \"import secrets; print(secrets.token_hex(32))\""
+            )
+
+        if not issues:
+            return
+
+        for msg in issues:
+            if self.guardian_debug:
+                logger.warning("INSECURE CONFIG (debug mode): %s", msg)
+            else:
+                logger.critical("STARTUP BLOCKED: %s", msg)
+
+        if not self.guardian_debug:
+            sys.exit(
+                "\n[FATAL] Insecure default secrets detected. "
+                "Set GUARDIAN_SECRET_KEY and GUARDIAN_API_TOKEN in your .env file "
+                "or set GUARDIAN_DEBUG=true for development.\n"
+            )
 
 
 @lru_cache

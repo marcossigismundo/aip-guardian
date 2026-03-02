@@ -59,9 +59,11 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
 COPY src/ ./src/
+COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-# Compile i18n .po -> .mo translation files (babel is available from pip install)
-RUN pybabel compile -d /app/src/guardian/locale 2>/dev/null || \
+# Make entrypoint executable and compile translations
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh && \
+    pybabel compile -d /app/src/guardian/locale 2>/dev/null || \
     echo "Note: .mo files should be pre-compiled in the repo"
 
 # Set PYTHONPATH so guardian package is importable
@@ -73,6 +75,11 @@ ENV PYTHONUNBUFFERED=1
 USER guardian
 
 EXPOSE 8001
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=3 \
+    CMD curl -f http://localhost:8001/api/v1/health || exit 1
+
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Default command: run the ASGI server
 CMD ["uvicorn", "guardian.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "4"]

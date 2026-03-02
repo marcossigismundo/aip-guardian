@@ -14,8 +14,8 @@ from guardian.config import get_settings
 logger = logging.getLogger(__name__)
 
 
-@shared_task
-def verify_audit_chain() -> dict[str, Any]:
+@shared_task(bind=True, max_retries=3)
+def verify_audit_chain(self: Any) -> dict[str, Any]:
     """Verify the full integrity of the audit-log hash chain.
 
     Uses ``ChainVerifier.verify_full_chain()`` to walk through every
@@ -71,8 +71,8 @@ def verify_audit_chain() -> dict[str, Any]:
             "broken_links": broken_links,
         }
 
-    except Exception:
-        logger.exception("Audit chain verification failed")
-        raise
+    except Exception as exc:
+        logger.exception("Audit chain verification failed, retrying")
+        raise self.retry(exc=exc, countdown=120) from exc
     finally:
         sync_engine.dispose()

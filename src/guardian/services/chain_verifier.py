@@ -11,9 +11,7 @@ workers or management commands).
 
 from __future__ import annotations
 
-import hashlib
 import hmac as hmac_mod
-import json
 import logging
 import time
 from datetime import datetime, timedelta, timezone
@@ -22,6 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from guardian.models.audit_log import AuditLog
+from guardian.services.hash_utils import compute_record_hash
 
 logger = logging.getLogger(__name__)
 
@@ -148,22 +147,14 @@ class ChainVerifier:
     def _compute_record_hash(record: AuditLog) -> str:
         """Recalculate the SHA-256 hash of an existing record.
 
-        Uses the same deterministic formula as
-        :meth:`AuditLogger._compute_record_hash`.
+        Delegates to :func:`hash_utils.compute_record_hash` which is the
+        single canonical implementation shared with :class:`AuditLogger`.
         """
-        details_json = json.dumps(
-            record.details if record.details else {},
-            sort_keys=True,
-            default=str,
+        return compute_record_hash(
+            aip_uuid=str(record.aip_uuid),
+            event_type=record.event_type,
+            status=record.status,
+            details=record.details if record.details else {},
+            previous_hash=record.previous_hash,
+            timestamp=record.created_at,
         )
-        iso_ts = record.created_at.isoformat()
-
-        payload = "|".join([
-            str(record.aip_uuid),
-            record.event_type,
-            record.status,
-            details_json,
-            record.previous_hash,
-            iso_ts,
-        ])
-        return hashlib.sha256(payload.encode("utf-8")).hexdigest()

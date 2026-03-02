@@ -1,0 +1,22 @@
+# Auto-generated from pyproject.toml — for environments without PEP 621 support.
+# Preferred: pip install . (uses pyproject.toml directly)
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+sqlalchemy[asyncio]>=2.0.36
+asyncpg>=0.30.0
+alembic>=1.14.0
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
+celery[redis]>=5.4.0
+redis>=5.2.0
+bagit>=1.8.1
+amclient>=1.2.3
+rfc3161ng>=2.1.3
+cryptography>=44.0.0
+jinja2>=3.1.4
+python-multipart>=0.0.18
+babel>=2.16.0
+httpx>=0.28.0
+aiofiles>=24.1.0
+itsdangerous>=2.2.0
+psycopg2-binary>=2.9.10

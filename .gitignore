@@ -49,8 +49,8 @@ secrets/
 # Alembic
 alembic/versions/__pycache__/
 
-# Compiled translations
-*.mo
+# Compiled translations (kept in repo for Docker builds)
+# *.mo
 
 # pytest
 .pytest_cache/
